@@ -1,0 +1,502 @@
+openapi: 3.0.0
+info:
+  title: Cricket App API
+  version: 1.0.0
+  description: API documentation for the Cricket App
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Cricketer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        mobile:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        joiningDate:
+          type: string
+          format: date-time
+          nullable: true
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        inactiveCricketer:
+          type: boolean
+
+    Coach:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        mobile:
+          type: string
+        isActive:
+          type: boolean
+
+    RegistrationForm:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        formNo:
+          type: string
+        date:
+          type: string
+          format: date-time
+        reference:
+          type: string
+        fullName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date-time
+        residenceAddress:
+          type: string
+        contactNo:
+          type: string
+        email:
+          type: string
+          format: email
+        education:
+          type: string
+        schoolCollege:
+          type: string
+        aadhaarNo:
+          type: string
+        whatsapp:
+          type: string
+        parentDetails:
+          type: object
+          properties:
+            name:
+              type: string
+            contactNo:
+              type: string
+            occupation:
+              type: string
+        cricketerId:
+          type: string
+          format: objectid
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        title:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+
+paths:
+  /api/signup:
+    post:
+      summary: Register a new cricketer
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                mobile:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: Cricketer created successfully
+        '400':
+          description: Invalid request body
+        '409':
+          description: Email or mobile already exists
+
+  /api/login:
+    post:
+      summary: Login as a cricketer
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mobile:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  cricketer:
+                    $ref: '#/components/schemas/Cricketer'
+
+  /api/admin/login:
+    post:
+      summary: Login as an admin
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  admin:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+
+  /api/coach/login:
+    post:
+      summary: Login as a coach
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  coach:
+                    $ref: '#/components/schemas/Coach'
+
+  /api/cricketer/profile:
+    get:
+      summary: Get cricketer profile
+      tags:
+        - Cricketer
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cricketer'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Cricketer not found
+
+    put:
+      summary: Update cricketer profile
+      tags:
+        - Cricketer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Profile updated successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Cricketer not found
+
+  /api/admin/cricketers:
+    get:
+      summary: Get all cricketers (admin only)
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of cricketers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cricketer'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/admin/cricketers/{id}/inactive-status:
+    put:
+      summary: Update cricketer inactive status (admin only)
+      tags:
+        - Admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isInactive:
+                  type: boolean
+      responses:
+        '200':
+          description: Status updated successfully
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Cricketer not found
+
+  /api/registrations:
+    post:
+      summary: Create a new registration
+      tags:
+        - Registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationForm'
+      responses:
+        '201':
+          description: Registration created successfully
+        '400':
+          description: Invalid request body
+
+    get:
+      summary: Get all registrations (admin only)
+      tags:
+        - Registration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of registrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegistrationForm'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/registrations/{id}:
+    get:
+      summary: Get registration by ID (admin only)
+      tags:
+        - Registration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectid
+      responses:
+        '200':
+          description: Registration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationForm'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Registration not found
+
+    put:
+      summary: Update registration (admin only)
+      tags:
+        - Registration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: objectid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationForm'
+      responses:
+        '200':
+          description: Registration updated successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Registration not found
+
+  /api/admin/announcements:
+    post:
+      summary: Create a new announcement (admin only)
+      tags:
+        - Announcement
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Announcement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Announcement'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+
+  /api/cricketer/announcement:
+    get:
+      summary: Get all announcements
+      tags:
+        - Announcement
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Announcement'
+        '401':
+          description: Unauthorized 
