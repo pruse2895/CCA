@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -15,7 +16,7 @@ import (
 
 func (m *MongoDB) GetCricketerByID(ctx context.Context, id primitive.ObjectID) (*models.Cricketer, error) {
 	var cricketer models.Cricketer
-	err := m.getCollection("cricketers").FindOne(ctx, bson.M{"_id": id}).Decode(&cricketer)
+	err := m.cricketerCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&cricketer)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +47,7 @@ func (m *MongoDB) UpdateCricketer(ctx context.Context, id primitive.ObjectID, na
 
 	update := bson.M{"$set": updateFields}
 
-	result, err := m.getCollection("cricketers").UpdateOne(ctx, bson.M{"_id": id}, update)
+	result, err := m.cricketerCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
 	if err != nil {
 		return err
 	}
@@ -57,14 +58,14 @@ func (m *MongoDB) UpdateCricketer(ctx context.Context, id primitive.ObjectID, na
 }
 
 func (m *MongoDB) CreateCricketer(ctx context.Context, cricketer *models.Cricketer) error {
-	_, err := m.getCollection("cricketers").InsertOne(ctx, cricketer)
+	_, err := m.cricketerCollection.InsertOne(ctx, cricketer)
 	// Consider checking for duplicate key errors here if needed, although indexes should handle it.
 	return err
 }
 
 func (m *MongoDB) GetCricketerByEmail(ctx context.Context, email string) (*models.Cricketer, error) {
 	var cricketer models.Cricketer
-	err := m.getCollection("cricketers").FindOne(ctx, bson.M{"email": email}).Decode(&cricketer)
+	err := m.cricketerCollection.FindOne(ctx, bson.M{"email": email}).Decode(&cricketer)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func (m *MongoDB) GetCricketerByEmail(ctx context.Context, email string) (*model
 
 func (m *MongoDB) GetCricketerByMobile(ctx context.Context, mobile string) (*models.Cricketer, error) {
 	var cricketer models.Cricketer
-	err := m.getCollection("cricketers").FindOne(ctx, bson.M{"mobile": mobile}).Decode(&cricketer)
+	err := m.cricketerCollection.FindOne(ctx, bson.M{"mobile": mobile}).Decode(&cricketer)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (m *MongoDB) GetAllCricketers(ctx context.Context) ([]models.Cricketer, err
 	findOptions := options.Find()
 	// Example: findOptions.SetSort(bson.D{{Key: "name", Value: 1}}) // Sort by name ascending
 
-	cursor, err := m.getCollection("cricketers").Find(ctx, bson.M{}, findOptions)
+	cursor, err := m.cricketerCollection.Find(ctx, bson.M{}, findOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -101,4 +102,53 @@ func (m *MongoDB) GetAllCricketers(ctx context.Context) ([]models.Cricketer, err
 	}
 
 	return cricketers, nil
+}
+
+// UpdateCricketerJoiningDate updates the joining date of a cricketer and sets the due date
+func (m *MongoDB) UpdateCricketerJoiningDate(ctx context.Context, id primitive.ObjectID, joiningDate *time.Time) error {
+	// Calculate due date (1 month after joining date)
+	var dueDate *time.Time
+	if joiningDate != nil {
+		calculatedDueDate := joiningDate.AddDate(0, 1, 0) // Add 1 month
+		dueDate = &calculatedDueDate
+	}
+
+	update := bson.M{"$set": bson.M{
+		"joiningDate": joiningDate,
+		"dueDate":     dueDate,
+	}}
+	result, err := m.cricketerCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
+}
+
+// UpdateCricketerDueDate updates the due date of a cricketer
+func (m *MongoDB) UpdateCricketerDueDate(ctx context.Context, id primitive.ObjectID, dueDate *time.Time) error {
+	update := bson.M{"$set": bson.M{"dueDate": dueDate}}
+	result, err := m.cricketerCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
+}
+
+// UpdateCricketerInactiveStatus updates the inactive cricketer status
+func (m *MongoDB) UpdateCricketerInactiveStatus(ctx context.Context, id primitive.ObjectID, isInactive bool) error {
+	update := bson.M{"$set": bson.M{"inactiveCricketer": isInactive}}
+	result, err := m.cricketerCollection.UpdateOne(ctx, bson.M{"_id": id}, update)
+	if err != nil {
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
 }

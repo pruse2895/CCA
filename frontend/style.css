@@ -1,81 +1,278 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: sans-serif;
-    margin: 20px;
-    line-height: 1.6;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
 }
 
-h1, h2, h3, h4 {
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header styles */
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+header h1 {
+    font-size: 2.5rem;
     margin-bottom: 10px;
+    color: #ffd700;
 }
 
+/* Page styles */
+.page {
+    display: none;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.page.active {
+    display: block;
+}
+
+/* Form container styles */
+.form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.form-container h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+}
+
+/* Form styles */
 form {
-    margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 label {
-    display: inline-block;
-    width: 150px; /* Adjust as needed */
-    margin-bottom: 5px;
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 0.9rem;
 }
 
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="password"],
-textarea {
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    width: 250px; /* Adjust as needed */
+input {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
 }
 
-textarea {
-    height: 80px;
+input:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
 }
 
 button {
-    padding: 10px 15px;
-    background-color: #007bff;
+    padding: 12px;
+    background-color: #3498db;
     color: white;
     border: none;
-    border-radius: 3px;
+    border-radius: 8px;
     cursor: pointer;
-    margin-right: 5px; /* Space between buttons */
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-top: 10px;
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #2980b9;
+    transform: translateY(-2px);
 }
 
-hr {
-    margin: 30px 0;
-}
-
-#auth-section,
-#logged-in-section {
+/* Links styles */
+.form-links {
+    text-align: center;
     margin-top: 20px;
 }
 
-ul {
+.form-links p {
+    margin: 10px 0;
+}
+
+.form-links a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.form-links a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+/* Message styles */
+.message {
+    text-align: center;
+    margin: 15px 0;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.error {
+    background-color: rgba(255, 235, 238, 0.9);
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+.success {
+    background-color: rgba(232, 245, 233, 0.9);
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+/* Logged in section styles */
+#logged-in-section {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.profile-section, .announcements-section, .admin-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Announcements list styles */
+#announcements-list {
     list-style: none;
-    padding: 0;
 }
 
-li {
-    border: 1px solid #eee;
-    padding: 10px;
+#announcements-list li {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+#announcements-list li:last-child {
+    border-bottom: none;
+}
+
+#announcements-list h3 {
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+#announcements-list p {
+    color: #666;
+    margin-bottom: 5px;
+}
+
+#announcements-list small {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+/* Cricketers list styles */
+#cricketers-list {
+    margin-top: 20px;
+}
+
+#cricketers-list li {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#cricketers-list li:last-child {
+    border-bottom: none;
+}
+
+#cricketers-list strong {
+    color: #2c3e50;
+}
+
+/* Profile info styles */
+#profile-info {
+    margin: 20px 0;
+}
+
+#profile-info p {
     margin-bottom: 10px;
-    border-radius: 3px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
 }
 
-p {
-    color: green; /* Default success message color */
-}
+/* Responsive styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
 
-.error-message {
-    color: red;
+    .page {
+        padding: 15px;
+    }
+
+    .form-container {
+        padding: 20px;
+        margin: 15px;
+    }
+
+    .form-container h2 {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    form {
+        gap: 15px;
+    }
+
+    input, button {
+        padding: 10px;
+    }
 } 

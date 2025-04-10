@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/jwtauth/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"cricketApp/models"
 
@@ -25,9 +26,15 @@ func (h *CricketerHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Req
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
-	adminID, ok := claims["sub"].(string) // Assuming admin ID (string) is in sub
+	adminIDHex, ok := claims["sub"].(string) // Assuming admin ID (string) is in sub
 	if !ok {
 		http.Error(w, "Invalid token claims (sub is not string)", http.StatusUnauthorized)
+		return
+	}
+
+	adminID, err := primitive.ObjectIDFromHex(adminIDHex)
+	if err != nil {
+		http.Error(w, "Invalid coach ID format in token", http.StatusUnauthorized)
 		return
 	}
 
@@ -42,7 +49,7 @@ func (h *CricketerHandler) CreateAnnouncement(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	announcement.CreatedBy = adminID
+	announcement.CreatedBy = adminIDHex
 
 	// Use the database interface, now returns the created object
 	createdAnnouncement, err := h.db.CreateAnnouncement(r.Context(), &announcement)

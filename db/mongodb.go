@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,44 +16,32 @@ import (
 
 // Removed global Client: var Client *mongo.Client
 
-// Init connects to MongoDB, initializes collections/indexes, and returns the client.
-func Init() (*mongo.Client, error) { // Changed signature to return client and error
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, proceeding without it") // Changed log level
-	}
+// Init initializes the MongoDB client
+func Init() (*mongo.Client, error) {
+	log.Println("Connecting to MongoDB...")
 
+	// Set client options
+	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+
+	// Connect to MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	mongoURI := os.Getenv("MONGODB_URI")
-	if mongoURI == "" {
-		log.Println("MONGODB_URI environment variable not set, using default mongodb://localhost:27017")
-		mongoURI = "mongodb://localhost:27017"
-	}
-
-	clientOptions := options.Client().ApplyURI(mongoURI)
-	client, err := mongo.Connect(ctx, clientOptions) // Use local client variable
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Printf("Error connecting to MongoDB: %v", err)
-		return nil, err // Return error
+		log.Printf("Failed to connect to MongoDB: %v", err)
+		return nil, err
 	}
 
+	// Check the connection
 	err = client.Ping(ctx, nil)
 	if err != nil {
-		log.Printf("Error pinging MongoDB: %v", err)
-		return nil, err // Return error
-	}
-	log.Println("Connected to MongoDB!")
-
-	// Initialize collections and indexes using the local client
-	err = initCollections(client) // Pass client
-	if err != nil {
-		// Disconnect if initialization fails?
-		_ = client.Disconnect(context.Background()) // Attempt disconnect
-		return nil, err                             // Return initialization error
+		log.Printf("Failed to ping MongoDB: %v", err)
+		return nil, err
 	}
 
-	return client, nil // Return connected client
+	log.Println("Connected to MongoDB successfully!")
+	return client, nil
 }
 
 // initCollections initializes all necessary collections and indexes.
@@ -190,3 +177,33 @@ func isIndexAlreadyExistsError(err error) bool {
 // Removed Admin operations (moved to admin.go)
 
 // Removed Announcement operations (moved to announcement.go)
+
+type MongoDB struct {
+	client                 *mongo.Client
+	db                     *mongo.Database
+	adminCollection        *mongo.Collection
+	cricketerCollection    *mongo.Collection
+	coachCollection        *mongo.Collection
+	venueCollection        *mongo.Collection
+	classCollection        *mongo.Collection
+	announcementCollection *mongo.Collection
+	sessionCollection      *mongo.Collection
+	registrationCollection *mongo.Collection
+}
+
+// NewMongoDB creates a new MongoDB instance
+func NewMongoDB(client *mongo.Client, dbName string) *MongoDB {
+	db := client.Database(dbName)
+	return &MongoDB{
+		client:                 client,
+		db:                     db,
+		adminCollection:        db.Collection("admins"),
+		cricketerCollection:    db.Collection("cricketers"),
+		coachCollection:        db.Collection("coaches"),
+		venueCollection:        db.Collection("venues"),
+		classCollection:        db.Collection("classes"),
+		announcementCollection: db.Collection("announcements"),
+		sessionCollection:      db.Collection("sessions"),
+		registrationCollection: db.Collection("registrations"),
+	}
+}

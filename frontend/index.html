@@ -3,99 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cricket App</title>
+    <title>JCA - Cricket Academy</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>JCA</h1>
+        </header>
 
-    <h1>Cricket App</h1>
-
-    <!-- Login/Signup Area -->
-    <div id="auth-section">
-        <h2>Login / Signup</h2>
-
-        <!-- Login Form -->
-        <form id="login-form">
-            <h3>Login</h3>
-            <label for="login-identifier">Mobile (Cricketer) or Email (Admin):</label>
-            <input type="text" id="login-identifier" required><br>
-
-            <label for="login-password">Password:</label>
-            <input type="password" id="login-password" required><br>
-
-            <button type="submit" name="loginType" value="cricketer">Login as Cricketer</button>
-            <button type="submit" name="loginType" value="admin">Login as Admin</button>
-        </form>
-        <p id="login-message"></p>
-
-        <hr>
-
-        <!-- Signup Form (Cricketers Only) -->
-        <form id="signup-form">
-            <h3>Cricketer Signup</h3>
-            <label for="signup-name">Name:</label>
-            <input type="text" id="signup-name" required><br>
-
-            <label for="signup-email">Email:</label>
-            <input type="email" id="signup-email" required><br>
-
-            <label for="signup-mobile">Mobile:</label>
-            <input type="tel" id="signup-mobile" required><br>
-
-            <label for="signup-password">Password:</label>
-            <input type="password" id="signup-password" required><br>
-
-            <button type="submit">Signup</button>
-        </form>
-        <p id="signup-message"></p>
-    </div>
-
-    <!-- Logged In Area (Initially Hidden) -->
-    <div id="logged-in-section" style="display: none;">
-        <h2>Welcome! <button id="logout-button">Logout</button></h2>
-
-        <!-- Announcements -->
-        <div id="announcements-section">
-            <h3>Announcements</h3>
-            <ul id="announcements-list"></ul>
-            <p id="announcements-message"></p>
+        <!-- Login Page -->
+        <div id="login-page" class="page">
+            <div class="form-container">
+                <h2>Login</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-mobile">Mobile Number</label>
+                        <input type="text" id="login-mobile" placeholder="Enter your mobile number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+                <p id="login-message" class="message"></p>
+                <div class="form-links">
+                    <p>Don't have an account? <a href="#" id="show-signup">Sign Up</a></p>
+                    <p>Are you an admin? <a href="#" id="show-admin-login">Admin Login</a></p>
+                </div>
+            </div>
         </div>
 
-        <hr>
-
-        <!-- Cricketer Profile -->
-        <div id="cricketer-profile-section" style="display: none;">
-            <h3>My Profile</h3>
-            <div id="profile-details"></div>
-            <form id="update-profile-form">
-                <h4>Update Profile</h4>
-                <label for="update-name">Name:</label>
-                <input type="text" id="update-name"><br>
-                <label for="update-mobile">Mobile:</label>
-                <input type="tel" id="update-mobile"><br>
-                <label for="update-password">New Password (optional):</label>
-                <input type="password" id="update-password"><br>
-                <button type="submit">Update Profile</button>
-            </form>
-             <p id="profile-message"></p>
+        <div id="admin-login-page" class="page">
+            <div class="form-container">
+                <h2>Admin Login</h2>
+                <form id="admin-login-form">
+                    <div class="form-group">
+                        <label for="admin-username">Username</label>
+                        <input type="text" id="admin-username" placeholder="Enter admin username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-password">Password</label>
+                        <input type="password" id="admin-password" placeholder="Enter admin password" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+                <p id="admin-login-message" class="message"></p>
+                <div class="form-links">
+                    <p>Back to <a href="#" id="show-login">User Login</a></p>
+                </div>
+            </div>
         </div>
 
-        <!-- Admin Area -->
-        <div id="admin-section" style="display: none;">
-            <h3>Admin Actions</h3>
-            <h4>Create Announcement</h4>
-            <form id="create-announcement-form">
-                <label for="announcement-title">Title:</label>
-                <input type="text" id="announcement-title" required><br>
-                <label for="announcement-content">Content:</label>
-                <textarea id="announcement-content" required></textarea><br>
-                <button type="submit">Create Announcement</button>
-            </form>
-            <p id="create-announcement-message"></p>
+        <!-- Signup Page -->
+        <div id="signup-page" class="page">
+            <div class="form-container">
+                <h2>Sign Up</h2>
+                <form id="signup-form">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-mobile">Mobile Number</label>
+                        <input type="text" id="signup-mobile" placeholder="Enter your mobile number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" placeholder="Create a password" required>
+                    </div>
+                    <button type="submit">Sign Up</button>
+                </form>
+                <p id="signup-message" class="message"></p>
+                <div class="form-links">
+                    <p>Already have an account? <a href="#" id="show-login">Login</a></p>
+                </div>
+            </div>
+        </div>
 
-            <h4>All Cricketers</h4>
-            <ul id="cricketers-list"></ul>
-             <p id="cricketers-message"></p>
+        <!-- Logged In Section -->
+        <div id="logged-in-section" class="page">
+            <div class="profile-section">
+                <h2>Profile</h2>
+                <div id="profile-info"></div>
+                <button id="logout-btn">Logout</button>
+            </div>
+
+            <div class="announcements-section">
+                <h2>Announcements</h2>
+                <ul id="announcements-list"></ul>
+            </div>
+
+            <div class="admin-section" id="admin-section">
+                <h2>Admin Panel</h2>
+                <form id="announcement-form">
+                    <input type="text" id="announcement-title" placeholder="Title" required>
+                    <textarea id="announcement-content" placeholder="Content" required></textarea>
+                    <button type="submit">Create Announcement</button>
+                </form>
+                <div id="cricketers-list"></div>
+            </div>
         </div>
     </div>
 

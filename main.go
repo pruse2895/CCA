@@ -8,6 +8,7 @@ import (
 	"cricketApp/db"
 	"cricketApp/handlers"
 	"cricketApp/router"
+	"cricketApp/scheduler"
 )
 
 func main() {
@@ -31,6 +32,11 @@ func main() {
 
 	// Setup router with handlers and database instance
 	r := router.SetupRouter(database, cricketerHandler)
+
+	// Start the reminder scheduler
+	reminderScheduler := scheduler.NewReminderScheduler(database)
+	go reminderScheduler.Start()
+	log.Println("Reminder scheduler started")
 
 	// Start server
 	log.Println("Server starting on :8080")

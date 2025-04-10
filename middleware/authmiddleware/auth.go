@@ -2,6 +2,7 @@ package authmiddleware
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -58,6 +59,8 @@ func Authenticator(next http.Handler) http.Handler {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+
+		fmt.Println("Token:", token)
 
 		// Add token to context
 		ctx := jwtauth.NewContext(r.Context(), token, nil)

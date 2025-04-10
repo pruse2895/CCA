@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth/v5"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -41,6 +43,7 @@ func (h *CricketerHandler) HandleCricketerSignup(w http.ResponseWriter, r *http.
 	}
 	cricketer.Password = string(hashedPassword)
 	cricketer.ID = primitive.NewObjectID() // Assign a new ObjectID
+	cricketer.CreatedAt = time.Now()       // Set creation timestamp
 
 	// Check if email or mobile already exists using the interface
 	_, err = h.db.GetCricketerByEmail(r.Context(), cricketer.Email)
@@ -163,11 +166,14 @@ func (h *CricketerHandler) GetCricketerProfile(w http.ResponseWriter, r *http.Re
 
 	// Return profile without sensitive information
 	profile := map[string]interface{}{
-		"id":     cricketer.ID.Hex(),
-		"name":   cricketer.Name,
-		"email":  cricketer.Email,
-		"mobile": cricketer.Mobile,
-		// Add other non-sensitive fields as needed
+		"id":                cricketer.ID.Hex(),
+		"name":              cricketer.Name,
+		"email":             cricketer.Email,
+		"mobile":            cricketer.Mobile,
+		"createdAt":         cricketer.CreatedAt,
+		"joiningDate":       cricketer.JoiningDate,
+		"dueDate":           cricketer.DueDate,
+		"inactiveCricketer": cricketer.InactiveCricketer,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -196,7 +202,6 @@ func (h *CricketerHandler) UpdateCricketerProfile(w http.ResponseWriter, r *http
 	var updateData struct {
 		Name     *string `json:"name,omitempty"` // Use pointers to handle omitted fields
 		Email    *string `json:"email,omitempty"`
-		Mobile   *string `json:"mobile,omitempty"`
 		Password *string `json:"password,omitempty"`
 	}
 
@@ -219,7 +224,7 @@ func (h *CricketerHandler) UpdateCricketerProfile(w http.ResponseWriter, r *http
 
 	// Update in database using the interface
 	err = h.db.UpdateCricketer(r.Context(), cricketerID,
-		updateData.Name, updateData.Email, updateData.Mobile, hashedPassPtr,
+		updateData.Name, updateData.Email, nil, hashedPassPtr,
 	)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -242,11 +247,15 @@ func (h *CricketerHandler) UpdateCricketerProfile(w http.ResponseWriter, r *http
 	}
 
 	// Return updated profile without sensitive information
-	profile := map[string]interface{}{ // Use a specific response struct maybe?
-		"id":     updatedCricketer.ID.Hex(),
-		"name":   updatedCricketer.Name,
-		"email":  updatedCricketer.Email,
-		"mobile": updatedCricketer.Mobile,
+	profile := map[string]interface{}{
+		"id":                updatedCricketer.ID.Hex(),
+		"name":              updatedCricketer.Name,
+		"email":             updatedCricketer.Email,
+		"mobile":            updatedCricketer.Mobile,
+		"createdAt":         updatedCricketer.CreatedAt,
+		"joiningDate":       updatedCricketer.JoiningDate,
+		"dueDate":           updatedCricketer.DueDate,
+		"inactiveCricketer": updatedCricketer.InactiveCricketer,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -266,14 +275,88 @@ func (h *CricketerHandler) GetAllCricketers(w http.ResponseWriter, r *http.Reque
 	responseProfiles := make([]map[string]interface{}, len(cricketers))
 	for i, c := range cricketers {
 		responseProfiles[i] = map[string]interface{}{
-			"id":     c.ID.Hex(),
-			"name":   c.Name,
-			"email":  c.Email,
-			"mobile": c.Mobile,
-			// Add other non-sensitive fields as needed
+			"id":                c.ID.Hex(),
+			"name":              c.Name,
+			"email":             c.Email,
+			"mobile":            c.Mobile,
+			"createdAt":         c.CreatedAt,
+			"joiningDate":       c.JoiningDate,
+			"dueDate":           c.DueDate,
+			"inactiveCricketer": c.InactiveCricketer,
 		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(responseProfiles)
+}
+
+// UpdateCricketerJoiningDate updates the joining date of a cricketer (admin only)
+func (h *CricketerHandler) UpdateCricketerJoiningDate(w http.ResponseWriter, r *http.Request) {
+	// Parse cricketer ID from URL
+	cricketerIDHex := chi.URLParam(r, "id")
+	fmt.Println("Cricketer ID:", cricketerIDHex)
+	cricketerID, err := primitive.ObjectIDFromHex(cricketerIDHex)
+	if err != nil {
+		http.Error(w, "Invalid cricketer ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var request struct {
+		JoiningDate time.Time `json:"joiningDate"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Update the joining date in the database
+	err = h.db.UpdateCricketerJoiningDate(r.Context(), cricketerID, &request.JoiningDate)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(w, "Cricketer not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error updating joining date: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Joining date updated successfully"})
+}
+
+// UpdateCricketerInactiveStatus updates whether a cricketer is inactive or not (admin only)
+func (h *CricketerHandler) UpdateCricketerInactiveStatus(w http.ResponseWriter, r *http.Request) {
+	// Parse cricketer ID from URL
+	fmt.Println("Path:", r.URL.Path)
+	fmt.Println("Param ID:", chi.URLParam(r, "id"))
+	cricketerIDHex := chi.URLParam(r, "id")
+	cricketerID, err := primitive.ObjectIDFromHex(cricketerIDHex)
+	if err != nil {
+		http.Error(w, "Invalid cricketer ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var request struct {
+		IsInactive bool `json:"isInactive"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Update the inactive status in the database
+	err = h.db.UpdateCricketerInactiveStatus(r.Context(), cricketerID, request.IsInactive)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(w, "Cricketer not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error updating inactive status: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Inactive status updated successfully"})
 }
