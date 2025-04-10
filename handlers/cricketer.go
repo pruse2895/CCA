@@ -328,11 +328,17 @@ func (h *CricketerHandler) UpdateCricketerJoiningDate(w http.ResponseWriter, r *
 // UpdateCricketerInactiveStatus updates whether a cricketer is inactive or not (admin only)
 func (h *CricketerHandler) UpdateCricketerInactiveStatus(w http.ResponseWriter, r *http.Request) {
 	// Parse cricketer ID from URL
-	fmt.Println("Path:", r.URL.Path)
-	fmt.Println("Param ID:", chi.URLParam(r, "id"))
 	cricketerIDHex := chi.URLParam(r, "id")
+	fmt.Printf("Debug - Handler: Cricketer ID from URLParam: %s\n", cricketerIDHex)
+
+	if cricketerIDHex == "" {
+		http.Error(w, "Cricketer ID is required", http.StatusBadRequest)
+		return
+	}
+
 	cricketerID, err := primitive.ObjectIDFromHex(cricketerIDHex)
 	if err != nil {
+		fmt.Printf("Debug - Handler: Error converting ID to ObjectID: %v\n", err)
 		http.Error(w, "Invalid cricketer ID", http.StatusBadRequest)
 		return
 	}
@@ -342,6 +348,7 @@ func (h *CricketerHandler) UpdateCricketerInactiveStatus(w http.ResponseWriter, 
 		IsInactive bool `json:"isInactive"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		fmt.Printf("Debug - Handler: Error decoding request body: %v\n", err)
 		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -359,4 +366,50 @@ func (h *CricketerHandler) UpdateCricketerInactiveStatus(w http.ResponseWriter, 
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Inactive status updated successfully"})
+}
+
+// UpdateCricketerDueDate handles updating a cricketer's due date
+func (h *CricketerHandler) UpdateCricketerDueDate(w http.ResponseWriter, r *http.Request) {
+	// Parse cricketer ID from URL
+	cricketerIDHex := chi.URLParam(r, "id")
+	if cricketerIDHex == "" {
+		http.Error(w, "Cricketer ID is required", http.StatusBadRequest)
+		return
+	}
+
+	cricketerID, err := primitive.ObjectIDFromHex(cricketerIDHex)
+	if err != nil {
+		http.Error(w, "Invalid cricketer ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse request body
+	var request struct {
+		DueDate string `json:"dueDate"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Parse due date string to time.Time
+	dueDate, err := time.Parse("2006-01-02", request.DueDate)
+	if err != nil {
+		http.Error(w, "Invalid due date format. Use YYYY-MM-DD", http.StatusBadRequest)
+		return
+	}
+
+	// Update the due date in the database
+	err = h.db.UpdateCricketerDueDate(r.Context(), cricketerID, &dueDate)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			http.Error(w, "Cricketer not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Error updating due date: "+err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Due date updated successfully"})
 }

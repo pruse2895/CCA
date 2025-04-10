@@ -165,6 +165,7 @@ func (h *CoachHandler) GetAllCoaches(w http.ResponseWriter, r *http.Request) {
 			"id":        c.ID.Hex(),
 			"name":      c.Name,
 			"mobile":    c.Mobile,
+			"isActive":  c.IsActive,
 			"createdAt": c.CreatedAt,
 		}
 	}

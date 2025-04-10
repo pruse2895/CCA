@@ -97,3 +97,18 @@ func (m *MongoDB) DeleteSession(ctx context.Context, id primitive.ObjectID) erro
 	}
 	return nil
 }
+
+// GetSessionsByCoachID retrieves all sessions for a specific coach
+func (m *MongoDB) GetSessionsByCoachID(ctx context.Context, coachID primitive.ObjectID) ([]*models.Session, error) {
+	var sessions []*models.Session
+	cursor, err := m.sessionCollection.Find(ctx, bson.M{"coachId": coachID})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	if err = cursor.All(ctx, &sessions); err != nil {
+		return nil, err
+	}
+	return sessions, nil
+}

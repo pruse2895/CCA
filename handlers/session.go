@@ -221,3 +221,31 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Session deleted successfully"})
 }
+
+// GetSessionsByCoachID handles getting all sessions for a specific coach
+func (h *SessionHandler) GetSessionsByCoachID(w http.ResponseWriter, r *http.Request) {
+	// Get coach ID from URL parameter
+	coachIDHex := chi.URLParam(r, "coachId")
+	if coachIDHex == "" {
+		http.Error(w, "Coach ID is required", http.StatusBadRequest)
+		return
+	}
+
+	// Convert coach ID from string to ObjectID
+	coachID, err := primitive.ObjectIDFromHex(coachIDHex)
+	if err != nil {
+		http.Error(w, "Invalid coach ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get sessions from database
+	sessions, err := h.db.GetSessionsByCoachID(r.Context(), coachID)
+	if err != nil {
+		http.Error(w, "Error fetching sessions: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Return sessions
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(sessions)
+}

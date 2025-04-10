@@ -15,7 +15,6 @@ import (
 func (m *MongoDB) CreateRegistration(ctx context.Context, registration *models.RegistrationForm) error {
 	registration.CreatedAt = time.Now()
 	registration.UpdatedAt = time.Now()
-	registration.Status = "pending" // Default status
 
 	_, err := m.registrationCollection.InsertOne(ctx, registration)
 	return err
@@ -65,7 +64,6 @@ func (m *MongoDB) UpdateRegistration(ctx context.Context, id primitive.ObjectID,
 			"whatsapp":         registration.Whatsapp,
 			"parentDetails":    registration.ParentDetails,
 			"cricketerId":      registration.CricketerID,
-			"status":           registration.Status,
 			"updatedAt":        registration.UpdatedAt,
 		},
 	}

@@ -25,13 +25,13 @@ func SetupRouter(database db.Database, cricketerHandler *handlers.CricketerHandl
 
 	// CORS middleware
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"}, // Allow all origins
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"*"}, // Allow all headers
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           300,
-		Debug:            true,
+		AllowedOrigins: []string{"*"}, // Allow all origins
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"X-Requested-With", "Content-Type", "Accept", "Authorization", "if-modified-since", "Access-Control-Allow-Origin", "id"}, // Allow all headers
+		// ExposedHeaders:   []string{"Link"},
+		// AllowCredentials: true,
+		// MaxAge:           300,
+		// Debug:            true,
 	}))
 
 	// Add error handling middleware
@@ -72,19 +72,18 @@ func SetupRouter(database db.Database, cricketerHandler *handlers.CricketerHandl
 		r.Group(func(r chi.Router) {
 			r.Use(authmiddleware.ValidateCricketer(database))
 			r.Route("/api/cricketer", func(r chi.Router) {
-
 				r.Get("/profile", cricketerHandler.GetCricketerProfile)    //done
 				r.Put("/profile", cricketerHandler.UpdateCricketerProfile) //done
-				r.Get("/announcement", cricketerHandler.GetAnnouncements)
+				r.Get("/announcement", cricketerHandler.GetAnnouncements)  //done
 			})
 		})
 
 		// Coach routes
-		r.Group(func(r chi.Router) {
+		r.Route("/api/coach", func(r chi.Router) {
 			r.Use(authmiddleware.Authorizer("coach"))
-
-			r.Route("/api/coach", func(r chi.Router) {
+			r.Route("/coach", func(r chi.Router) {
 				r.Get("/profile", coachHandler.GetCoachProfile) //done
+				r.Get("/{coachId}/sessions", sessionHandler.GetSessionsByCoach)
 			})
 		})
 
@@ -92,41 +91,47 @@ func SetupRouter(database db.Database, cricketerHandler *handlers.CricketerHandl
 		r.Route("/api/admin", func(r chi.Router) {
 			r.Use(authmiddleware.Authorizer("admin"))
 
-			r.Get("/cricketers", cricketerHandler.GetAllCricketers)       //done
-			r.Post("/announcements", cricketerHandler.CreateAnnouncement) //done
-			r.Put("/cricketers/{id}/joining-date", cricketerHandler.UpdateCricketerJoiningDate)
-			r.Put("/cricketers/{id}/inactive-status", cricketerHandler.UpdateCricketerInactiveStatus)
-			r.Post("/coach", coachHandler.CreateCoach)
-			r.Get("/coaches", coachHandler.GetAllCoaches)
-			r.Put("/coach", coachHandler.UpdateCoach)
+			// announcements routes
+			r.Route("/announcements", func(r chi.Router) {
+				r.Post("/", cricketerHandler.CreateAnnouncement) //done
+			})
 
-			r.Post("/session", sessionHandler.CreateSession)
-			r.Put("/session{id}", sessionHandler.UpdateSession)
-			r.Delete("/session/{id}", sessionHandler.DeleteSession)
+			// coaches routes
+			r.Route("/coaches", func(r chi.Router) {
+				r.Post("/", coachHandler.CreateCoach)  //done
+				r.Get("/", coachHandler.GetAllCoaches) //done
+				r.Put("/", coachHandler.UpdateCoach)   //done
+			})
 
-		})
+			// Cricketer routes
+			r.Route("/cricketers", func(r chi.Router) {
+				r.Get("/", cricketerHandler.GetAllCricketers)
+				r.Put("/{id}/joining-date", cricketerHandler.UpdateCricketerJoiningDate)
+				r.Put("/{id}/inactive-status", cricketerHandler.UpdateCricketerInactiveStatus)
+				r.Put("/{id}/due-date", cricketerHandler.UpdateCricketerDueDate)
+			})
 
-		// Session routes
-		r.Route("/api/sessions", func(r chi.Router) {
-			r.Get("/sessions/coach/{coachId}", sessionHandler.GetSessionsByCoach)
-			r.Get("/{id}", sessionHandler.GetSession)
-			r.Get("/", sessionHandler.GetAllSessions)
+			// Session routes
+			r.Route("/sessions", func(r chi.Router) {
+				r.Get("/", sessionHandler.GetAllSessions)
+				r.Get("/coach/{coachId}", sessionHandler.GetSessionsByCoachID)
+				r.Post("/", sessionHandler.CreateSession)
+				r.Get("/{id}", sessionHandler.GetSession)
+				r.Put("/{id}", sessionHandler.UpdateSession)
+				r.Delete("/{id}", sessionHandler.DeleteSession)
+			})
 
-		})
-
-		// Registration routes
-		r.Route("/api/registrations", func(r chi.Router) {
-			// Public routes
-			r.Post("/", registrationHandler.CreateRegistration)
-
-			// Protected routes (admin only)
-			r.Group(func(r chi.Router) {
-				r.Use(authmiddleware.Authorizer("admin"))
+			// Registration routes
+			r.Route("/registrations", func(r chi.Router) {
+				r.Post("/", registrationHandler.CreateRegistration)
 				r.Get("/", registrationHandler.GetAllRegistrations)
 				r.Get("/{id}", registrationHandler.GetRegistration)
 				r.Put("/{id}", registrationHandler.UpdateRegistration)
+
 			})
+
 		})
+
 	})
 
 	return r

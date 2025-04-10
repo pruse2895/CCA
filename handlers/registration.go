@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"cricketApp/db"
@@ -22,13 +25,53 @@ func NewRegistrationHandler(db db.Database) *RegistrationHandler {
 
 // CreateRegistration handles the creation of a new registration form
 func (h *RegistrationHandler) CreateRegistration(w http.ResponseWriter, r *http.Request) {
+	// Read and log the raw request body for debugging
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		fmt.Printf("Debug - Handler: Error reading request body: %v\n", err)
+		http.Error(w, "Error reading request body", http.StatusBadRequest)
+		return
+	}
+	fmt.Printf("Debug - Handler: Raw request body: %s\n", string(body))
+
+	// Reset the body reader so it can be read again
+	r.Body = io.NopCloser(bytes.NewBuffer(body))
+
 	var req models.CreateRegistrationRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		fmt.Printf("Debug - Handler: Error decoding request body: %v\n", err)
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Create new registration form
+	// Validate required fields
+	if req.FormNo == "" || req.FullName == "" || req.ContactNo == "" || req.Date == "" || req.DateOfBirth == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	// Convert cricketerId from string to ObjectID
+	cricketerID, err := primitive.ObjectIDFromHex(req.CricketerID)
+	if err != nil {
+		http.Error(w, "Invalid cricketer ID", http.StatusBadRequest)
+		return
+	}
+
+	// Check if registration already exists for this cricketer
+	existingRegistrations, err := h.db.GetAllRegistrations(r.Context())
+	if err != nil {
+		http.Error(w, "Error checking existing registrations", http.StatusInternalServerError)
+		return
+	}
+
+	for _, reg := range existingRegistrations {
+		if reg.CricketerID == cricketerID {
+			http.Error(w, "A registration already exists for this cricketer", http.StatusConflict)
+			return
+		}
+	}
+
+	// Create registration form
 	registration := &models.RegistrationForm{
 		FormNo:           req.FormNo,
 		Date:             req.Date,
@@ -43,26 +86,18 @@ func (h *RegistrationHandler) CreateRegistration(w http.ResponseWriter, r *http.
 		AadhaarNo:        req.AadhaarNo,
 		Whatsapp:         req.Whatsapp,
 		ParentDetails:    req.ParentDetails,
+		CricketerID:      cricketerID,
 	}
 
-	// Convert CricketerID string to ObjectID
-	cricketerID, err := primitive.ObjectIDFromHex(req.CricketerID)
+	// Save to database
+	err = h.db.CreateRegistration(r.Context(), registration)
 	if err != nil {
-		http.Error(w, "Invalid cricketer ID format", http.StatusBadRequest)
-		return
-	}
-	registration.CricketerID = cricketerID
-
-	if err := h.db.CreateRegistration(r.Context(), registration); err != nil {
-		http.Error(w, "Failed to create registration", http.StatusInternalServerError)
+		http.Error(w, "Error creating registration: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message":      "Registration created successfully",
-		"registration": registration,
-	})
+	json.NewEncoder(w).Encode(map[string]string{"message": "Registration created successfully"})
 }
 
 // GetRegistration retrieves a registration by ID
@@ -178,9 +213,6 @@ func (h *RegistrationHandler) UpdateRegistration(w http.ResponseWriter, r *http.
 	}
 	if updateData.ParentDetails != nil {
 		registration.ParentDetails = *updateData.ParentDetails
-	}
-	if updateData.Status != nil {
-		registration.Status = *updateData.Status
 	}
 
 	// Update registration in database

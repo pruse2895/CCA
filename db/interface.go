@@ -43,6 +43,7 @@ type Database interface {
 	GetAllSessions(ctx context.Context) ([]*models.Session, error)
 	UpdateSession(ctx context.Context, id primitive.ObjectID, session *models.Session) error
 	DeleteSession(ctx context.Context, id primitive.ObjectID) error
+	GetSessionsByCoachID(ctx context.Context, coachID primitive.ObjectID) ([]*models.Session, error)
 
 	// Registration methods
 	CreateRegistration(ctx context.Context, registration *models.RegistrationForm) error
